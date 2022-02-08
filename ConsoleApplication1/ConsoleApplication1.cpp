@@ -1,6 +1,8 @@
 ﻿#include <iostream>
 #include <vector>
 #include <conio.h>
+#include <cstdlib>
+#include<ctime>
 #include <windows.h>
 
 using namespace std;
@@ -35,6 +37,8 @@ public:
 		return;
 	}
 
+	virtual void SetPosition(char _button) {};
+
 };
 
 class Hero: public Character {
@@ -42,35 +46,55 @@ private:
 
 public:
 	Hero() {
-		heals = 100, damage = 20,  name = 'A', position = { 0, 0 };
+		heals = 100, damage = 10,  name = 'A', position = { 0, 0 };
 	};
 
-	void SetPosition(char _button) {
-		int buttonCode = static_cast<int>(_button);
-		if (buttonCode == static_cast<int>('s')) {
+	void SetPosition(char _button) override {
+		if (_button == 's') {
 			if (position.first + 1 < WorldSize.first) {
 				oldPosition = position;
 				position.first++;
 			}
 		}
-		else if (buttonCode == static_cast<int>('w')) {
+		else if (_button == 'w') {
 			if (position.first - 1 >= 0) {
 				oldPosition = position;
 				position.first--;
 			}
 		}
-		else if (buttonCode == static_cast<int>('d')) {
+		else if (_button == 'd') {
 			if (position.second + 1 < WorldSize.second) {
 				oldPosition = position;
 				position.second++;
 			}
 		}
-		else if (buttonCode == static_cast<int>('a')) {
+		else if (_button == 'a') {
 			if (position.second - 1 >= 0) {
 				oldPosition = position;
 				position.second--;
 			}
 		}
+	}
+};
+
+class Zombi : public Character {
+public:
+	Zombi() {
+		heals = 20, damage = 5, name = 'Z', oldPosition = position = { rand() % WorldSize.first, rand() % WorldSize.second};
+	}
+
+	void SetPosition(char _button) override {
+		if (_button == 'w' || _button == 's' || _button == 'a' || _button == 'd') {
+			int rand_x = rand() % 3 - 1;
+			int rand_y = rand() % 3 - 1;
+			if ((position.first + rand_x < WorldSize.first) && (position.first + rand_x >= 0) &&
+				(position.second + rand_y < WorldSize.second) && (position.second + rand_y >= 0)) {
+				
+				oldPosition = position;
+				position = { position.first + rand_x, position.second + rand_y };
+			}
+		}
+		
 	}
 };
 
@@ -94,24 +118,36 @@ public:
 		}
 	}
 
-	void SetPosition(Character& Obj) {
-		location[Obj.GetOldPosition().first][Obj.GetOldPosition().second] = floor;
-		location[Obj.GetPosition().first][Obj.GetPosition().second] = Obj.GetName();
+	void SetPosition(vector<Character*> Objects) {
+
+		for (Character* Obj : Objects) {
+			location[Obj->GetOldPosition().first][Obj->GetOldPosition().second] = floor;
+			location[Obj->GetPosition().first][Obj->GetPosition().second] = Obj->GetName();
+		}
 	}
 };
 
 void GamePlay() {
 	Map map;
-	Hero hero;
+	Character* hero = new Hero;
+	Zombi zombi;
+	vector<Character*>gameObjects(10);
+	for (int i = 0; i < 10; i++) {
+		gameObjects[i] = new Zombi;
+	}
+	gameObjects.push_back(hero);
 	char moveBatton;
 	while (1) {
-		map.SetPosition(hero);
+		map.SetPosition(gameObjects);
 		map.WriteMap();
 		moveBatton = _getch();
-		hero.SetPosition(moveBatton);
+		for (int i = 0; i < gameObjects.size(); i++) {
+			gameObjects[i]->SetPosition(moveBatton);
+		}
 	}
 }
 
 int main() {
+	srand(time(0));
 	GamePlay();
 }
