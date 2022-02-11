@@ -40,6 +40,8 @@ public:
 
 	virtual void SetPosition(char _button) {};
 
+	void SetPositionOld() { position = oldPosition; }
+
 };
 
 class Hero: public Character {
@@ -156,8 +158,13 @@ public:
 	void SetPosition(vector<Character*> Objects) {
 
 		for (Character* Obj : Objects) {
-			location[Obj->GetOldPosition().first][Obj->GetOldPosition().second] = floor;
-			location[Obj->GetPosition().first][Obj->GetPosition().second] = Obj->GetName();
+			if (location[Obj->GetPosition().first][Obj->GetPosition().second] != '#') {
+				location[Obj->GetOldPosition().first][Obj->GetOldPosition().second] = floor;
+				location[Obj->GetPosition().first][Obj->GetPosition().second] = Obj->GetName();
+			}
+			else {
+				Obj->SetPositionOld();
+			}
 		}
 	}
 
