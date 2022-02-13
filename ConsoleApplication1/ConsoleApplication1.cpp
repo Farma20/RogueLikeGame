@@ -149,7 +149,7 @@ public:
 	Map() : location(vector<vector<char>>(height, vector<char>(width, '_'))), width(WorldSize.second), height(WorldSize.first), floor('_') {}
 
 	void WriteMap(){
-		/*system("cls");*/
+		system("cls");
 		for (vector<char> i : location) {
 			for (char j : i) {cout << j << " ";}
 			cout << endl;
@@ -201,8 +201,6 @@ vector<RoomPosition>GenRooms(int count) {
 		partPoints.secondPoints.first = t2; partPoints.secondPoints.second = l2;
 		PartOfRooms[i-1] = partPoints;
 
-		cout << partPoints.firstPoints.first << " " << partPoints.firstPoints.second << " : " << partPoints.secondPoints.first << " " << partPoints.secondPoints.second << endl;
-
 		if (i == (part / 2)) {
 			t1 += static_cast<int>(floor(WorldSize.first / 2));
 			t2 += static_cast<int>(floor(WorldSize.first / 2));
@@ -220,15 +218,28 @@ vector<RoomPosition>GenRooms(int count) {
 	for (int i = 0; i < count; i++) {
 
 		do{
-			partMap = rand() % (part - 1);
+			partMap = rand() % part;
 		}
 		while (!randPart[partMap]);
 		randPart[partMap] = false;
 
-		RoomPos.firstPoints.first = PartOfRooms[partMap].firstPoints.first + rand() % (static_cast<int>(floor(PartOfRooms[partMap].secondPoints.first / 2 - PartOfRooms[partMap].firstPoints.first)));
-		RoomPos.firstPoints.second = PartOfRooms[partMap].firstPoints.second + rand() % (static_cast<int>(floor(PartOfRooms[partMap].secondPoints.second / 2 - PartOfRooms[partMap].firstPoints.second)));
-		RoomPos.secondPoints.first = RoomPos.firstPoints.first + 4 + rand() % (PartOfRooms[partMap].secondPoints.first - RoomPos.firstPoints.first - 4);
-		RoomPos.secondPoints.second = RoomPos.firstPoints.second + 4 + rand() % (PartOfRooms[partMap].secondPoints.second - RoomPos.firstPoints.second - 4);
+		int borderV1 = static_cast<int>(floor(PartOfRooms[partMap].secondPoints.first / 2)) - PartOfRooms[partMap].firstPoints.first;
+		int borderH1 = static_cast<int>(floor(PartOfRooms[partMap].secondPoints.second / 2)) - PartOfRooms[partMap].firstPoints.second;
+		
+		if (!borderV1) borderV1++;
+		if (!borderH1) borderH1++;
+
+		RoomPos.firstPoints.first = PartOfRooms[partMap].firstPoints.first + rand() % (borderV1);
+		RoomPos.firstPoints.second = PartOfRooms[partMap].firstPoints.second + rand() % (borderH1);
+
+		int borderV2 = PartOfRooms[partMap].secondPoints.first - RoomPos.firstPoints.first - 4;
+		int borderH2 = PartOfRooms[partMap].secondPoints.second - RoomPos.firstPoints.second - 4;
+
+		if (!borderV2) borderV2++;
+		if (!borderH2) borderH2++;
+
+		RoomPos.secondPoints.first = RoomPos.firstPoints.first + 4 + rand() % (borderV2);
+		RoomPos.secondPoints.second = RoomPos.firstPoints.second + 4 + rand() % (borderH2);
 		RoomsPos.push_back(RoomPos);
 		}
 		
@@ -238,7 +249,7 @@ vector<RoomPosition>GenRooms(int count) {
 
 void GamePlay() {
 	Map map;
-	int count = 5;
+	int count = 8;
 	vector<Room*>myRooms;
 	vector<RoomPosition> RoomPos = GenRooms(count);
 	for (int i = 0; i < count; i++) {
