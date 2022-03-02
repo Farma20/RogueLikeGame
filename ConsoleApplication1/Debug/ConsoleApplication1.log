@@ -1,1 +1,6 @@
-﻿  ConsoleApplication1.vcxproj -> C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\Debug\ConsoleApplication1.exe
+﻿  ConsoleApplication1.cpp
+C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(229,21): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(318,20): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(330,21): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(337,12): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+  ConsoleApplication1.vcxproj -> C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\Debug\ConsoleApplication1.exe

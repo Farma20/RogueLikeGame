@@ -38,7 +38,7 @@ public:
 		return;
 	}
 
-	void SetDamage(int _dm) {
+	void Damage(int _dm) {
 		damage += _dm;
 		return;
 	}
@@ -53,8 +53,8 @@ class Hero: public Character {
 private:
 
 public:
-	Hero() {
-		heals = 100, damage = 10, LVL = 1, name = 'A', position = { 0, 0 };
+	Hero(pair<int, int> _pos) {
+		heals = 100, damage = 10, LVL = 1, name = 'A', position = _pos;
 	};
 
 	void SetPosition(char _button) override {
@@ -120,14 +120,22 @@ public:
 	vector<Character*> SpawnEnemys() {
 		vector<Character*>Enemys(enemyCount);
 		for (int i = 0; i < enemyCount; i++) {
-			pair<int, int>positionInRoom {
-				(position.firstPoints.first + 1) + rand() % (position.secondPoints.first - (position.firstPoints.first + 2)),
-				(position.firstPoints.second + 1) + rand() % (position.secondPoints.second - (position.firstPoints.second + 2))
-			};
-			Enemys[i] = new Zombi(positionInRoom);
-
+			Enemys[i] = new Zombi(GenPointsInRoom());
 		}
 		return Enemys;
+	}
+
+	Character* SpawnHero() {
+		Character* myHero = new Hero(GenPointsInRoom());
+		return myHero;
+	}
+
+	pair<int, int> GenPointsInRoom() {
+		pair<int, int>positionInRoom{
+				(position.firstPoints.first + 1) + rand() % (position.secondPoints.first - (position.firstPoints.first + 2)),
+				(position.firstPoints.second + 1) + rand() % (position.secondPoints.second - (position.firstPoints.second + 2))
+		};
+		return positionInRoom;
 	}
 };
 
@@ -138,15 +146,45 @@ public:
 	}
 };
 
-//класс карты
 class Map {
 private:
 	int width;
 	int height;
 	char floor;
 	vector<vector<char>> location;
+
+	pair<int, int> GenDoors(Room* _room) {
+		pair<int, int>enter;
+		while (true) {
+			int partRoom = 1 + rand() % 3;
+			if (partRoom == 1 || partRoom == 2) {
+				enter.first = _room->GetRoomPosition().firstPoints.first + rand() % (_room->GetRoomPosition().secondPoints.first - _room->GetRoomPosition().firstPoints.first);
+				if (partRoom == 1)
+					enter.second = _room->GetRoomPosition().firstPoints.second;
+				else
+					enter.second = _room->GetRoomPosition().secondPoints.second;
+			}
+			else {
+				enter.second = _room->GetRoomPosition().firstPoints.second + rand() % (_room->GetRoomPosition().secondPoints.second - _room->GetRoomPosition().firstPoints.second);
+				if (partRoom == 3)
+					enter.first = _room->GetRoomPosition().firstPoints.first;
+				else
+					enter.first = _room->GetRoomPosition().secondPoints.first;
+			}
+
+			if (enter.first >= 2 && enter.first < WorldSize.first - 2 &&
+				enter.second > 2 && enter.second < WorldSize.second &&
+				!(enter.first == _room->GetRoomPosition().firstPoints.first && enter.second == _room->GetRoomPosition().firstPoints.second)&&
+				!(enter.first == _room->GetRoomPosition().firstPoints.first && enter.second == _room->GetRoomPosition().secondPoints.second)&&
+				!(enter.first == _room->GetRoomPosition().secondPoints.first && enter.second == _room->GetRoomPosition().secondPoints.second)&&
+				!(enter.first == _room->GetRoomPosition().secondPoints.first && enter.second == _room->GetRoomPosition().firstPoints.second))
+				break;
+		}
+		return enter;
+	}
+
 public:
-	Map() : location(vector<vector<char>>(height, vector<char>(width, '_'))), width(WorldSize.second), height(WorldSize.first), floor('_') {}
+	Map() : location(vector<vector<char>>(height, vector<char>(width, ' '))), width(WorldSize.second), height(WorldSize.first), floor(' ') {}
 
 	void WriteMap(){
 		system("cls");
@@ -170,8 +208,8 @@ public:
 		}
 	}
 
-	void SetPosition(vector<Room*> rooms) {
-		for (Room* room: rooms) {
+	void SetPosition(vector<Room*> _rooms) {
+		for (Room* room: _rooms) {
 			for (int i = room->GetRoomPosition().firstPoints.first; i <= room->GetRoomPosition().secondPoints.first; i++) {
 				for (int j = room->GetRoomPosition().firstPoints.second; j <= room->GetRoomPosition().secondPoints.second; j++) {
 					if (i == room->GetRoomPosition().firstPoints.first ||
@@ -181,8 +219,29 @@ public:
 
 						location[i][j] = room->GetWall();
 					}
-					else { location[i][j] = '*'; }
+					else { location[i][j] = ' '; }
 				}
+			}
+		}
+	}
+
+	void GenRoads(vector<Room*> _rooms) {
+		for (int i = 0; i < _rooms.size(); i++) {
+			int j = i + 1;
+			if (i == _rooms.size() - 1) {
+				j = 0;
+			}
+
+			pair<int, int> enter1, enter2;
+			enter1 = GenDoors(_rooms[i]);
+			enter2 = GenDoors(_rooms[j]);
+
+			/*location[enter1.first][enter1.second] = ' ';
+			location[enter2.first][enter2.second] = ' ';*/
+			pair<int, int> roadPoint = enter1;
+			bool V, H;
+			while (roadPoint != enter2) {
+
 			}
 		}
 	}
@@ -191,7 +250,7 @@ public:
 
 vector<RoomPosition>GenRooms(int count) {
 
-	int part = 8;
+	int part = count;
 	vector<RoomPosition> PartOfRooms(part);
 	vector<bool>randPart(part, true);
 	int t1 = 0, l1 = 0, t2 = static_cast<int>(floor(WorldSize.first / 2) - 1), l2 = static_cast<int>(floor(WorldSize.second / (part/2) - 1));
@@ -252,17 +311,22 @@ void GamePlay() {
 	int count = 8;
 	vector<Room*>myRooms;
 	vector<RoomPosition> RoomPos = GenRooms(count);
+	int heroRoom = rand() % count - 1;
+	Character* hero;
 	for (int i = 0; i < count; i++) {
 		myRooms.push_back(new EzRoom(RoomPos[i]));
+		if (heroRoom == i)
+			hero = myRooms[i]->SpawnHero();
 	}
 	map.SetPosition(myRooms);
 	vector<Character*>gameObjects;
 	for (int i = 0; i < myRooms.size(); i++) {
 		for(int j = 0; j < 3; j++)
-		gameObjects.push_back(myRooms[i]->SpawnEnemys()[j]);
+			gameObjects.push_back(myRooms[i]->SpawnEnemys()[j]);
 	}
-	Character* hero = new Hero;
+
 	gameObjects.push_back(hero);
+	map.GenRoads(myRooms);
 	char moveBatton;
 	while (1) {
 		map.SetPosition(gameObjects);
