@@ -153,34 +153,79 @@ private:
 	char floor;
 	vector<vector<char>> location;
 
-	pair<int, int> GenDoors(Room* _room) {
-		pair<int, int>enter;
-		while (true) {
-			int partRoom = 1 + rand() % 3;
-			if (partRoom == 1 || partRoom == 2) {
-				enter.first = _room->GetRoomPosition().firstPoints.first + rand() % (_room->GetRoomPosition().secondPoints.first - _room->GetRoomPosition().firstPoints.first);
-				if (partRoom == 1)
-					enter.second = _room->GetRoomPosition().firstPoints.second;
-				else
-					enter.second = _room->GetRoomPosition().secondPoints.second;
+	void SelectRoudPoint(RoomPosition firstWall, RoomPosition secondWall, char line) {
+		if (line == '-') {
+			if ((firstWall.firstPoints.first < secondWall.firstPoints.first + 2) && (secondWall.firstPoints.first + 2 < firstWall.secondPoints.first)) {
+				AddRoad({ secondWall.firstPoints.first + 2, firstWall.firstPoints.second },
+					{ secondWall.firstPoints.first + 2, secondWall.firstPoints.second },
+					line);
 			}
-			else {
-				enter.second = _room->GetRoomPosition().firstPoints.second + rand() % (_room->GetRoomPosition().secondPoints.second - _room->GetRoomPosition().firstPoints.second);
-				if (partRoom == 3)
-					enter.first = _room->GetRoomPosition().firstPoints.first;
-				else
-					enter.first = _room->GetRoomPosition().secondPoints.first;
+			else if ((firstWall.firstPoints.first < secondWall.secondPoints.first - 2) && (secondWall.secondPoints.first - 2 < firstWall.secondPoints.first)) {
+				AddRoad({ secondWall.secondPoints.first - 2, firstWall.firstPoints.second },
+					{ secondWall.secondPoints.first - 2, secondWall.firstPoints.second },
+					line);
 			}
-
-			if (enter.first >= 2 && enter.first < WorldSize.first - 2 &&
-				enter.second > 2 && enter.second < WorldSize.second &&
-				!(enter.first == _room->GetRoomPosition().firstPoints.first && enter.second == _room->GetRoomPosition().firstPoints.second)&&
-				!(enter.first == _room->GetRoomPosition().firstPoints.first && enter.second == _room->GetRoomPosition().secondPoints.second)&&
-				!(enter.first == _room->GetRoomPosition().secondPoints.first && enter.second == _room->GetRoomPosition().secondPoints.second)&&
-				!(enter.first == _room->GetRoomPosition().secondPoints.first && enter.second == _room->GetRoomPosition().firstPoints.second))
-				break;
+			else if ((secondWall.firstPoints.first < firstWall.firstPoints.first + 2) && (firstWall.firstPoints.first + 2 < secondWall.secondPoints.first)) {
+				AddRoad({ firstWall.firstPoints.first + 2, firstWall.firstPoints.second },
+					{ firstWall.firstPoints.first + 2, secondWall.firstPoints.second },
+					line);
+			}
+			else if ((secondWall.firstPoints.first < firstWall.secondPoints.first - 2) && (firstWall.secondPoints.first - 2 < secondWall.secondPoints.first)) {
+				AddRoad({ firstWall.secondPoints.first - 2, firstWall.firstPoints.second },
+					{ firstWall.secondPoints.first - 2, secondWall.firstPoints.second },
+					line);
+			}
+			else if ((secondWall.firstPoints.first == firstWall.firstPoints.first) && (secondWall.secondPoints.first == firstWall.secondPoints.first)) {
+				AddRoad({ secondWall.firstPoints.first + 2, firstWall.firstPoints.second },
+					{ secondWall.firstPoints.first + 2, secondWall.firstPoints.second },
+					line);
+			}
+		}/*_______________________________*/
+		else {
+			if ((firstWall.firstPoints.second < secondWall.firstPoints.second + 2) && (secondWall.firstPoints.second + 2 < firstWall.secondPoints.second)) {
+				AddRoad({ firstWall.firstPoints.first, secondWall.firstPoints.second + 2 },
+					{ secondWall.firstPoints.first, secondWall.firstPoints.second + 2 },
+					line);
+			}
+			else if ((firstWall.firstPoints.second < secondWall.secondPoints.second - 2) && (secondWall.secondPoints.second - 2 < firstWall.secondPoints.second)) {
+				AddRoad({ firstWall.secondPoints.first, secondWall.secondPoints.second - 2 },
+					{ secondWall.secondPoints.first, secondWall.secondPoints.second - 2 },
+					line);
+			}
+			else if ((secondWall.firstPoints.second < firstWall.firstPoints.second + 2) && (firstWall.firstPoints.first + 2 < secondWall.secondPoints.second)) {
+				AddRoad({ firstWall.firstPoints.first, firstWall.firstPoints.second + 2},
+					{ secondWall.firstPoints.first, firstWall.firstPoints.second + 2 },
+					line);
+			}
+			else if ((secondWall.firstPoints.second < firstWall.secondPoints.second - 2) && (firstWall.secondPoints.second - 2 < secondWall.secondPoints.second)) {
+				AddRoad({ firstWall.secondPoints.first, firstWall.secondPoints.second - 2 },
+					{ secondWall.secondPoints.first, firstWall.secondPoints.second - 2},
+					line);
+			}
 		}
-		return enter;
+	}
+
+	void AddRoad(pair<int, int>point1, pair<int, int>point2, char line) {
+		if (line == '-') {
+			for (int i = point1.second; i <= point2.second; i++) {
+				if (i == point1.second || i == point2.second)
+					location[point1.first][i] = '|';
+				else {
+					location[point1.first - 1][i] = 127;
+					location[point1.first + 1][i] = 127;
+				}
+			}
+		}
+		else {
+			for (int i = point1.first; i <= point2.first; i++) {
+				if (i == point1.first || i == point2.first)
+					location[i][point1.second] = '-';
+				else {
+					location[i][point1.second - 1] = 127;
+					location[i][point1.second + 1] = 127;
+				}
+			}
+		}
 	}
 
 public:
@@ -226,25 +271,31 @@ public:
 	}
 
 	void GenRoads(vector<Room*> _rooms) {
-		for (int i = 0; i < _rooms.size(); i++) {
-			int j = i + 1;
-			if (i == _rooms.size() - 1) {
-				j = 0;
+		for (int i = 0; i < _rooms.size()-1; i++) {
+
+			RoomPosition firstWall, secondWall;
+
+			if ((i == 0) || (i == _rooms.size() / 2 - 1)) {
+				firstWall.firstPoints = { _rooms[i]->GetRoomPosition().secondPoints.first, _rooms[i]->GetRoomPosition().firstPoints.second };
+				firstWall.secondPoints = _rooms[i]->GetRoomPosition().secondPoints;
+
+				secondWall.firstPoints = _rooms[i + _rooms.size()/2]->GetRoomPosition().firstPoints;
+				secondWall.secondPoints = { _rooms[i + _rooms.size() / 2]->GetRoomPosition().firstPoints.first, _rooms[i + _rooms.size() / 2]->GetRoomPosition().secondPoints.second };
+
+				SelectRoudPoint(firstWall, secondWall, '||');
 			}
 
-			pair<int, int> enter1, enter2;
-			enter1 = GenDoors(_rooms[i]);
-			enter2 = GenDoors(_rooms[j]);
+			
+			firstWall.firstPoints = {_rooms[i]->GetRoomPosition().firstPoints.first, _rooms[i]->GetRoomPosition().secondPoints.second};
+			firstWall.secondPoints = _rooms[i]->GetRoomPosition().secondPoints;
 
-			/*location[enter1.first][enter1.second] = ' ';
-			location[enter2.first][enter2.second] = ' ';*/
-			pair<int, int> roadPoint = enter1;
-			bool V, H;
-			while (roadPoint != enter2) {
+			secondWall.firstPoints = _rooms[i+1]->GetRoomPosition().firstPoints;
+			secondWall.secondPoints = { _rooms[i + 1]->GetRoomPosition().secondPoints.first, _rooms[i+1]->GetRoomPosition().firstPoints.second };
 
-			}
-		}
+			SelectRoudPoint(firstWall, secondWall, '-');
+		}	
 	}
+
 };
 
 
@@ -276,23 +327,18 @@ vector<RoomPosition>GenRooms(int count) {
 	int partMap;
 	for (int i = 0; i < count; i++) {
 
-		do{
-			partMap = rand() % part;
-		}
-		while (!randPart[partMap]);
-		randPart[partMap] = false;
 
-		int borderV1 = static_cast<int>(floor(PartOfRooms[partMap].secondPoints.first / 2)) - PartOfRooms[partMap].firstPoints.first;
-		int borderH1 = static_cast<int>(floor(PartOfRooms[partMap].secondPoints.second / 2)) - PartOfRooms[partMap].firstPoints.second;
+		int borderV1 = static_cast<int>(floor(PartOfRooms[i].secondPoints.first / 2)) - PartOfRooms[i].firstPoints.first;
+		int borderH1 = static_cast<int>(floor(PartOfRooms[i].secondPoints.second / 2)) - PartOfRooms[i].firstPoints.second;
 		
 		if (!borderV1) borderV1++;
 		if (!borderH1) borderH1++;
 
-		RoomPos.firstPoints.first = PartOfRooms[partMap].firstPoints.first + rand() % (borderV1);
-		RoomPos.firstPoints.second = PartOfRooms[partMap].firstPoints.second + rand() % (borderH1);
+		RoomPos.firstPoints.first = PartOfRooms[i].firstPoints.first + rand() % (borderV1);
+		RoomPos.firstPoints.second = PartOfRooms[i].firstPoints.second + rand() % (borderH1);
 
-		int borderV2 = PartOfRooms[partMap].secondPoints.first - RoomPos.firstPoints.first - 4;
-		int borderH2 = PartOfRooms[partMap].secondPoints.second - RoomPos.firstPoints.second - 4;
+		int borderV2 = PartOfRooms[i].secondPoints.first - RoomPos.firstPoints.first - 4;
+		int borderH2 = PartOfRooms[i].secondPoints.second - RoomPos.firstPoints.second - 4;
 
 		if (!borderV2) borderV2++;
 		if (!borderH2) borderH2++;
@@ -326,6 +372,7 @@ void GamePlay() {
 	}
 
 	gameObjects.push_back(hero);
+	
 	map.GenRoads(myRooms);
 	char moveBatton;
 	while (1) {

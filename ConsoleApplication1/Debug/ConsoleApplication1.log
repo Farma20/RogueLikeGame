@@ -1,6 +1,9 @@
 ﻿  ConsoleApplication1.cpp
-C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(229,21): warning C4018: <: несоответствие типов со знаком и без знака
-C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(318,20): warning C4018: <: несоответствие типов со знаком и без знака
-C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(330,21): warning C4018: <: несоответствие типов со знаком и без знака
-C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(337,12): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
+C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(274,21): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(285,1): warning C4305: аргумент: усечение из "int" в "char"
+C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(285,44): warning C4309: аргумент: усечение константного значения
+C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(327,6): warning C4101: partMap: неиспользованная локальная переменная
+C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(369,20): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(382,21): warning C4018: <: несоответствие типов со знаком и без знака
+C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\ConsoleApplication1\ConsoleApplication1.cpp(389,12): warning C4244: аргумент: преобразование "time_t" в "unsigned int", возможна потеря данных
   ConsoleApplication1.vcxproj -> C:\Users\iurba\Desktop\проганье\2 курс\RogueLike\Game\Debug\ConsoleApplication1.exe
