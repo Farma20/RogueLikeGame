@@ -7,7 +7,26 @@
 
 using namespace std;
 
-pair <int, int> WorldSize{ 32, 60};
+pair <int, int> WorldSize{50, 100 };   /* 32, 60 */
+
+HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+
+
+enum Colors {
+	Black, Blue, Green, Cyan, Red, Magenta, Brown, LightGray,
+	DarkGray, LightBlue, LightGreen, LightCyan, LightRed, LightMagenta, Yellow, White
+};
+
+template<Colors txt = LightGray, Colors bg = Black>
+ostream& color(ostream& text) {
+	HANDLE hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleTextAttribute(hStdOut, (WORD)((bg << 4) | txt));
+	return text;
+}
+
+
+bool direction = 1;
+bool step = 1;
 
 struct RoomPosition {
 	pair<int, int>firstPoints;
@@ -20,6 +39,8 @@ protected:
 	int damage;
 	int LVL;
 	char name;
+	int radiusVision;
+	bool vision;
 	pair<int, int> position, oldPosition;
 public:
 
@@ -28,6 +49,8 @@ public:
 	int GetDamage() {return damage;}
 
 	char GetName() {return name;}
+
+	bool GetVision() { return vision; }
 
 	pair<int, int> GetPosition() {return position;}
 
@@ -38,6 +61,10 @@ public:
 		return;
 	}
 
+	void SetName(char _name) {
+		name = _name;
+	}
+
 	void Damage(int _dm) {
 		damage += _dm;
 		return;
@@ -45,16 +72,25 @@ public:
 
 	virtual void SetPosition(char _button) {};
 
+	virtual void FindInRadius(pair<int, int> heroPosition) {};
+
+	virtual void Fight(Character*fighter) {
+		fighter->SetHeals(-GetDamage());
+		if (fighter->GetHeals() <= 0) {
+			fighter->SetName('X');
+			fighter->~Character();
+			fighter = nullptr;
+		}
+	};
+
 	void SetPositionOld() { position = oldPosition; }
 
 };
 
 class Hero: public Character {
-private:
-
 public:
 	Hero(pair<int, int> _pos) {
-		heals = 100, damage = 10, LVL = 1, name = 'A', position = _pos;
+		heals = 3, damage = 10, LVL = 1, name = 'A', position = _pos, radiusVision = 2, vision = false;
 	};
 
 	void SetPosition(char _button) override {
@@ -86,23 +122,87 @@ public:
 };
 
 class Zombi : public Character {
+private:
+	void AttackHarassment(pair<int, int> heroPosition) {
+		if ((heroPosition.first > position.first) && (heroPosition.second < position.second)) {
+			oldPosition = position;
+			if (direction) position.first++;
+			else position.second--;
+			direction = !direction;
+		}
+		else if ((heroPosition.first > position.first) && (heroPosition.second > position.second)) {
+			oldPosition = position;
+			if (direction) position.first++;
+			else position.second++;
+			direction = !direction;
+		}
+		else if ((heroPosition.first < position.first) && (heroPosition.second < position.second)) {
+			oldPosition = position;
+			if (direction) position.first--;
+			else position.second--;
+			direction = !direction;
+		}
+		else if ((heroPosition.first < position.first) && (heroPosition.second > position.second)) {
+			oldPosition = position;
+			if (direction) position.first--;
+			else position.second++;
+			direction = !direction;
+		}
+		else if ((heroPosition.first < position.first) && (heroPosition.second == position.second)) {
+			oldPosition = position;
+			position.first--;
+		}
+		else if ((heroPosition.first > position.first) && (heroPosition.second == position.second)) {
+			oldPosition = position;
+			position.first++;
+		}
+		else if ((heroPosition.first == position.first) && (heroPosition.second < position.second)) {
+			oldPosition = position;
+			position.second--;
+		}
+		else if ((heroPosition.first == position.first) && (heroPosition.second > position.second)) {
+			oldPosition = position;
+			position.second++;
+		}
+		
+	}
+
 public:
 	Zombi(pair<int, int> _position) {
-		heals = 20, damage = 5, LVL = 1, name = 'Z', oldPosition = position = _position;
+		heals = 20, damage = 1, LVL = 1, name = 'Z', oldPosition = position = _position, radiusVision = 3, vision = false;
 	}
 
 	void SetPosition(char _button) override {
+		if (vision)
+			return;
+
 		if (_button == 'w' || _button == 's' || _button == 'a' || _button == 'd') {
 			int rand_y = rand() % 3 - 1;
 			int rand_x = rand() % 3 - 1;
-			if ((position.first + rand_y < WorldSize.second) && (position.first + rand_y >= 0) &&
-				(position.second + rand_x < WorldSize.first) && (position.second + rand_x >= 0)) {
+			if ((position.first + rand_y < WorldSize.first) && (position.first + rand_y >= 0) &&
+				(position.second + rand_x < WorldSize.second) && (position.second + rand_x >= 0)) {
 				
 				oldPosition = position;
 				position = { position.first + rand_y, position.second + rand_x };
 			}
 		}
-		
+	}
+
+	void FindInRadius(pair<int, int> heroPosition) {
+		pair<int, int> p1, p2;
+		p1 = { position.first - radiusVision, position.second - radiusVision };
+		p2 = { position.first + radiusVision, position.second + radiusVision };
+
+		if (vision) {
+			AttackHarassment(heroPosition);
+		}
+
+		else if (((p1.first <= heroPosition.first)&& (heroPosition.first <= p2.first)) &&
+		(p1.second <= heroPosition.second) && (heroPosition.second <= p2.second))
+		{
+			vision = true;
+			AttackHarassment(heroPosition);
+		}
 	}
 };
 
@@ -142,7 +242,7 @@ public:
 class EzRoom : public Room {
 public:
 	EzRoom(RoomPosition _position) {
-		enemyCount = 3, enemyMaxLVL = 1, itemsCount = 0, wall = '#', position = _position;
+		enemyCount = 4, enemyMaxLVL = 1, itemsCount = 0, wall = '#', position = _position;
 	}
 };
 
@@ -192,7 +292,7 @@ private:
 					{ secondWall.secondPoints.first, secondWall.secondPoints.second - 2 },
 					line);
 			}
-			else if ((secondWall.firstPoints.second < firstWall.firstPoints.second + 2) && (firstWall.firstPoints.first + 2 < secondWall.secondPoints.second)) {
+			else if ((secondWall.firstPoints.second < firstWall.firstPoints.second + 2) && (firstWall.firstPoints.second + 2 < secondWall.secondPoints.second)) {
 				AddRoad({ firstWall.firstPoints.first, firstWall.firstPoints.second + 2},
 					{ secondWall.firstPoints.first, firstWall.firstPoints.second + 2 },
 					line);
@@ -234,23 +334,47 @@ public:
 	void WriteMap(){
 		system("cls");
 		for (vector<char> i : location) {
-			for (char j : i) {cout << j << " ";}
+			for (char j : i) {
+				if(j == 'A')
+					cout << color<Red, Black> << j << " ";
+				else if(j == 'Z')
+					cout << color<Green, Black> << j << " ";
+				else if(j == 127)
+					cout << color<DarkGray, Black> << j << " ";
+				else
+					cout << color<White, Black> << j << " ";
+			}
 			cout << endl;
 		}
 	}
-
 	void SetPosition(vector<Character*> Objects) {
 
-		for (Character* Obj : Objects) {
-			if (location[Obj->GetPosition().first][Obj->GetPosition().second] != '#')
-			{
-				location[Obj->GetOldPosition().first][Obj->GetOldPosition().second] = floor;
-				location[Obj->GetPosition().first][Obj->GetPosition().second] = Obj->GetName();
+			for (Character* Obj : Objects) {
+				if (Obj != nullptr) {
+
+					if ((location[Obj->GetPosition().first][Obj->GetPosition().second] != '#') &&
+						(location[Obj->GetPosition().first][Obj->GetPosition().second] != 127) &&
+						(location[Obj->GetPosition().first][Obj->GetPosition().second] != 'Z') &&
+						(location[Obj->GetPosition().first][Obj->GetPosition().second] != 'A'))
+					{
+						location[Obj->GetOldPosition().first][Obj->GetOldPosition().second] = floor;
+						location[Obj->GetPosition().first][Obj->GetPosition().second] = Obj->GetName();
+					}
+
+					else if ((location[Obj->GetOldPosition().first][Obj->GetOldPosition().second] == 'Z') &&
+						(location[Obj->GetPosition().first][Obj->GetPosition().second] == 'A') &&
+						Obj->GetName() != 'A')
+					{
+						Obj->SetPositionOld();
+						Obj->Fight(Objects[Objects.size() - 1]);
+					}
+
+					
+					else {
+						Obj->SetPositionOld();
+					}
+				}
 			}
-			else {
-				Obj->SetPositionOld();
-			}
-		}
 	}
 
 	void SetPosition(vector<Room*> _rooms) {
@@ -275,7 +399,7 @@ public:
 
 			RoomPosition firstWall, secondWall;
 
-			if ((i == 0) || (i == _rooms.size() / 2 - 1)) {
+			if (i < _rooms.size()/2) {
 				firstWall.firstPoints = { _rooms[i]->GetRoomPosition().secondPoints.first, _rooms[i]->GetRoomPosition().firstPoints.second };
 				firstWall.secondPoints = _rooms[i]->GetRoomPosition().secondPoints;
 
@@ -379,8 +503,12 @@ void GamePlay() {
 		map.SetPosition(gameObjects);
 		map.WriteMap();
 		moveBatton = _getch();
+		
 		for (int i = 0; i < gameObjects.size(); i++) {
-			gameObjects[i]->SetPosition(moveBatton);
+			if (gameObjects[i] != nullptr) {
+				gameObjects[i]->FindInRadius(hero->GetPosition());
+				gameObjects[i]->SetPosition(moveBatton);
+			}
 		}
 	}
 }
